@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.7.2)
 project (psp)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -29,13 +29,21 @@ function (psp_build_dep name cmake_file)
 			message(FATAL_ERROR "Build step for ${name} failed: ${result}")
 		endif()
 	endif()
-	add_subdirectory(${CMAKE_BINARY_DIR}/${name}-src
-		${CMAKE_BINARY_DIR}/${name}-build
-		EXCLUDE_FROM_ALL)
 
-	include_directories(${CMAKE_BINARY_DIR}/${name}-src/extras/${name}/include)
-	include_directories(${CMAKE_BINARY_DIR}/${name}-src/include)
-	include_directories(${CMAKE_BINARY_DIR}/${name}-src)
+	if(${name} STREQUAL arrow)
+		include_directories(${CMAKE_BINARY_DIR}/${name}-src/cpp/src/${name})
+		add_subdirectory(${CMAKE_BINARY_DIR}/${name}-src/cpp/
+			${CMAKE_BINARY_DIR}/${name}-build
+			EXCLUDE_FROM_ALL)
+	else()
+		add_subdirectory(${CMAKE_BINARY_DIR}/${name}-src
+			${CMAKE_BINARY_DIR}/${name}-build
+			EXCLUDE_FROM_ALL)
+
+		include_directories(${CMAKE_BINARY_DIR}/${name}-src/extras/${name}/include)
+		include_directories(${CMAKE_BINARY_DIR}/${name}-src/include)
+		include_directories(${CMAKE_BINARY_DIR}/${name}-src)
+	endif()
 endfunction()
 ##############################
 
@@ -258,12 +266,24 @@ elseif(PSP_CPP_BUILD OR PSP_PYTHON_BUILD)
 		find_package(NumPy)
 		include_directories( ${PYTHON_NUMPY_INCLUDE_DIR})
 
+		message("${Cyan}Building minimal Apache Arrow${ColorReset}")
+		psp_build_dep("arrow" "../../cmake/arrow.txt.in")
+		find_library(ARROW_LIBRARY
+			NAMES arrow libarrow
+			PATHS ${CMAKE_BINARY_DIR}/${name}-build/${CMAKE_BUILD_TYPE}
+			NO_DEFAULT_PATH)
+		if(NOT ARROW_LIBRARY)
+			message(FATAL_ERROR "${Red}Something is wrong with arrow build!${ColorReset}")
+		else()
+			message(WARNING "${Cyan}Found arrow ${ARROW_LIBRARY}${ColorReset}")
+		endif()
 		#####################
 	endif()
 endif()
 
 psp_build_dep("hopscotch" "../../cmake/hopscotch.txt.in")
 psp_build_dep("ordered-map" "../../cmake/ordered-map.txt.in")
+
 
 #####################
 
@@ -403,6 +423,7 @@ elseif(PSP_CPP_BUILD OR PSP_PYTHON_BUILD)
 		target_compile_options(binding PRIVATE -Wdeprecated-declarations)
 		target_link_libraries(binding psp)
 		target_link_libraries(binding tbb)
+		target_link_libraries(binding ${ARROW_LIBRARIES})
 		target_link_libraries(binding ${PYTHON_LIBRARIES})
 		########################
 	else()
