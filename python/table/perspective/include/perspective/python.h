@@ -30,6 +30,7 @@
 #include <perspective/binding.h>
 #include <perspective/exports.h>
 #include <perspective/python/accessor.h>
+#include <perspective/python/arrow.h>
 #include <perspective/python/base.h>
 #include <perspective/python/context.h>
 #include <perspective/python/fill.h>

@@ -12,7 +12,6 @@
 #include <perspective/base.h>
 #include <perspective/binding.h>
 #include <perspective/python/base.h>
-#include <arrow/table.h>
 
 namespace perspective {
 namespace binding {
@@ -39,8 +38,6 @@ t_date pythondate_to_t_date(t_val date);
 
 t_dtype type_string_to_t_dtype(std::string type, std::string name = "");
 t_dtype type_string_to_t_dtype(py::str type, py::str name = "");
-
-void arrow_test();
 
 } //namespace binding
 } //namespace perspective

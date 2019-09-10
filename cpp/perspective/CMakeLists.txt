@@ -267,11 +267,28 @@ elseif(PSP_CPP_BUILD OR PSP_PYTHON_BUILD)
 		include_directories( ${pybind11_INCLUDE_DIRS} )
 
 		find_package(NumPy)
+		if(NOT PYTHON_NUMPY_FOUND)
+			message(FATAL_ERROR "${Red}Numpy could not be located${ColorReset}")
+		else()
+			message(WARNING "${Cyan}Numpy found: ${PYTHON_NUMPY_INCLUDE_DIR}${ColorReset}")
+
+		endif()
 		include_directories( ${PYTHON_NUMPY_INCLUDE_DIR})
+
+		find_package(PyArrow)
+		if(NOT PYTHON_PYARROW_FOUND)
+			message(FATAL_ERROR "${Red}PyArrow could not be located${ColorReset}")
+		else()
+			message(WARNING "${Cyan}PyArrow found: ${PYTHON_PYARROW_INCLUDE_DIR}${ColorReset}")
+		endif()
+		include_directories(${PYTHON_PYARROW_INCLUDE_DIR})
+		link_directories(${PYTHON_PYARROW_LIBRARY_DIR})
 
 		message("${Cyan}Building minimal Apache Arrow${ColorReset}")
 		psp_build_dep("double-conversion" "../../cmake/double-conversion.txt.in")
+		# psp_build_dep("rapidjson" "../../cmake/rapidjson.txt.in")
 		psp_build_dep("arrow" "../../cmake/arrow.txt.in")
+
 		#####################
 	endif()
 endif()
@@ -372,6 +389,7 @@ set (SOURCE_FILES
 
 set (PYTHON_SOURCE_FILES
 	${CMAKE_SOURCE_DIR}/../../python/table/perspective/src/accessor.cpp
+	${CMAKE_SOURCE_DIR}/../../python/table/perspective/src/arrow.cpp
 	${CMAKE_SOURCE_DIR}/../../python/table/perspective/src/context.cpp
 	${CMAKE_SOURCE_DIR}/../../python/table/perspective/src/fill.cpp
 	${CMAKE_SOURCE_DIR}/../../python/table/perspective/src/python.cpp
@@ -407,7 +425,6 @@ elseif(PSP_CPP_BUILD OR PSP_PYTHON_BUILD)
 		# Python extra targets #
 		########################
 		add_library(psp SHARED ${SOURCE_FILES} ${HEADER_FILES})
-
 		target_compile_definitions(psp PRIVATE PSP_ENABLE_PYTHON=1)
 		target_link_libraries(psp ${PYTHON_LIBRARIES})
 		set(CMAKE_SHARED_LIBRARY_SUFFIX .so)
@@ -419,6 +436,7 @@ elseif(PSP_CPP_BUILD OR PSP_PYTHON_BUILD)
 		target_link_libraries(binding psp)
 		target_link_libraries(binding tbb)
 		target_link_libraries(binding arrow)
+		target_link_libraries(binding ${PYTHON_PYARROW_LIBRARIES})
 		target_link_libraries(binding ${PYTHON_LIBRARIES})
 		########################
 	else()
