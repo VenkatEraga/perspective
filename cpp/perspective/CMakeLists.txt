@@ -31,10 +31,13 @@ function (psp_build_dep name cmake_file)
 	endif()
 
 	if(${name} STREQUAL arrow)
-		include_directories(${CMAKE_BINARY_DIR}/${name}-src/cpp/src/${name})
-		add_subdirectory(${CMAKE_BINARY_DIR}/${name}-src/cpp/
-			${CMAKE_BINARY_DIR}/${name}-build
+		configure_file(${CMAKE_SOURCE_DIR}/../../cmake/arrow/CMakeLists.txt ${CMAKE_BINARY_DIR}/arrow-src/cpp/ COPYONLY)
+		configure_file(${CMAKE_SOURCE_DIR}/../../cmake/arrow/config.h ${CMAKE_BINARY_DIR}/arrow-src/cpp/src/arrow/util/ COPYONLY)
+		add_subdirectory(${CMAKE_BINARY_DIR}/arrow-src/cpp/
+			${CMAKE_BINARY_DIR}/arrow-build
 			EXCLUDE_FROM_ALL)
+
+		include_directories(${CMAKE_BINARY_DIR}/arrow-src/cpp/src/)
 	else()
 		add_subdirectory(${CMAKE_BINARY_DIR}/${name}-src
 			${CMAKE_BINARY_DIR}/${name}-build
@@ -267,16 +270,8 @@ elseif(PSP_CPP_BUILD OR PSP_PYTHON_BUILD)
 		include_directories( ${PYTHON_NUMPY_INCLUDE_DIR})
 
 		message("${Cyan}Building minimal Apache Arrow${ColorReset}")
+		psp_build_dep("double-conversion" "../../cmake/double-conversion.txt.in")
 		psp_build_dep("arrow" "../../cmake/arrow.txt.in")
-		find_library(ARROW_LIBRARY
-			NAMES arrow libarrow
-			PATHS ${CMAKE_BINARY_DIR}/${name}-build/${CMAKE_BUILD_TYPE}
-			NO_DEFAULT_PATH)
-		if(NOT ARROW_LIBRARY)
-			message(FATAL_ERROR "${Red}Something is wrong with arrow build!${ColorReset}")
-		else()
-			message(WARNING "${Cyan}Found arrow ${ARROW_LIBRARY}${ColorReset}")
-		endif()
 		#####################
 	endif()
 endif()
@@ -423,7 +418,7 @@ elseif(PSP_CPP_BUILD OR PSP_PYTHON_BUILD)
 		target_compile_options(binding PRIVATE -Wdeprecated-declarations)
 		target_link_libraries(binding psp)
 		target_link_libraries(binding tbb)
-		target_link_libraries(binding ${ARROW_LIBRARIES})
+		target_link_libraries(binding arrow)
 		target_link_libraries(binding ${PYTHON_LIBRARIES})
 		########################
 	else()
