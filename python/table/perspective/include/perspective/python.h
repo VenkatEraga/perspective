@@ -310,6 +310,7 @@ PYBIND11_MODULE(libbinding, m)
      *
      * Perspective defs
      */
+    m.def("arrow_test", &arrow_test);
     m.def("make_table", &make_table_py);
     m.def("make_computed_table", &make_computed_table_py);
     m.def("make_view_zero", &make_view_ctx0);
