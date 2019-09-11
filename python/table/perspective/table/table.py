@@ -8,6 +8,7 @@
 from perspective.table.libbinding import make_table, t_op
 from .view import View
 from ._accessor import _PerspectiveAccessor
+from ._utils import _dtype_to_str
 
 
 class Table(object):
@@ -22,8 +23,10 @@ class Table(object):
         self._accessor = _PerspectiveAccessor(data_or_schema)
         self._limit = config.get("limit", 4294967295)
         self._index = config.get("index", "")
-        # FIXME: views and tables created lose reference to the View/Table in C++
         self._table = make_table(None, self._accessor, None, self._limit, self._index, t_op.OP_INSERT, False, False)
+        self._gnode_id = self._table.get_gnode().get_id()
+        self._callbacks = []
+        self._views = []
 
     def load(self, data_or_schema):
         '''Configuration helper for constructing a view
@@ -45,21 +48,53 @@ class Table(object):
         '''Get perspective schema
 
         Returns:
-            t_schema : the Perspective schema object
+           dict : A key-value mapping of column names to data types.
         '''
-        return self._table.get_schema()
+        s = self._table.get_schema()
+        columns = s.columns()
+        types = s.types()
+        schema = {}
+        for i in range(0, len(columns)):
+            if (columns[i] != "psp_okey"):
+                schema[columns[i]] = _dtype_to_str(types[i])
+        return schema
 
     def columns(self, computed=False):
-        return [column for column in self.schema().columns() if column != "psp_okey"]
+        '''Returns the column names of this dataset.'''
+        return list(self.schema().keys())
 
     def update(self, data):
-        pass
+        types = self._table.get_schema().types()
+        self._accessor = _PerspectiveAccessor(data)
+        self._accessor._types = types[:len(self._accessor.names())]
+        self._table = make_table(self._table, self._accessor, None, self._limit, self._index, t_op.OP_INSERT, True, False)
 
-    def remove(self, data):
-        pass
+    def remove(self, pkeys):
+        '''Removes the rows with the primary keys specified in `pkeys`.
+
+        If the table does not have an index, `remove()` has no effect. Removes propagate to views derived from the table.
+
+        Params:
+            pkeys (list) : a list of primary keys to indicate the rows that should be removed.
+        '''
+        if self._index == "":
+            return
+        pkeys = list(map(lambda idx: {self._index: idx}, pkeys))
+        types = [self._table.get_schema().get_dtype(self._index)]
+        self._accessor = _PerspectiveAccessor(pkeys)
+        self._accessor._names = [self._index]
+        self._accessor._types = types
+        make_table(self._table, self._accessor, None, self._limit, self._index, t_op.OP_DELETE, True, False)
 
     def view(self, config=None):
         config = config or {}
         if len(config.get("columns", [])) == 0:
             config["columns"] = self.columns()
-        return View(self, config)
+        view = View(self, config)
+        self._views.append(view)
+        return view
+
+    def _update_callback(self):
+        cache = {}
+        for callback in self._callbacks:
+            callback.callback(cache)
