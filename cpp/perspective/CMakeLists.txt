@@ -275,7 +275,7 @@ elseif(PSP_CPP_BUILD OR PSP_PYTHON_BUILD)
 		endif()
 		include_directories( ${PYTHON_NUMPY_INCLUDE_DIR})
 
-		find_package(PyArrow)
+		find_package(PyArrow 0.14.1 EXACT)
 		if(NOT PYTHON_PYARROW_FOUND)
 			message(FATAL_ERROR "${Red}PyArrow could not be located${ColorReset}")
 		else()
