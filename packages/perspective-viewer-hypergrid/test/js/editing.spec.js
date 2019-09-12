@@ -81,6 +81,27 @@ utils.with_server({}, () => {
                     await page.waitFor(100);
                     await page.waitForSelector("perspective-viewer:not([updating])");
                 });
+
+                test.capture("should follow the indexed row when the data updates", async page => {
+                    const viewer = await page.$("perspective-viewer");
+                    await page.shadow_click("perspective-viewer", "#config_button");
+                    await page.waitForSelector("perspective-viewer[settings]");
+                    await page.evaluate(async viewer => {
+                        viewer.setAttribute("sort", '[["Sales", "desc"]]');
+                        await viewer.flush();
+                    }, viewer);
+                    await page.waitForSelector("perspective-viewer:not([updating])");
+                    await dblclick(page);
+                    await page.keyboard.sendCharacter("a");
+                    await page.keyboard.sendCharacter("b");
+                    await page.keyboard.sendCharacter("c");
+                    await page.keyboard.sendCharacter("d");
+                    await page.evaluate(viewer => {
+                        viewer.update([{Sales: 100000}]);
+                    }, viewer);
+                    await page.waitForSelector("perspective-viewer:not([updating])");
+                    await page.waitFor(100);
+                });
             });
         },
         {reload_page: true, root: path.join(__dirname, "..", "..")}

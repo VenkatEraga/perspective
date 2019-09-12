@@ -29,12 +29,13 @@
     "superstore.html/shows a sort indicator": "5f4aae968d2dac96781c954e05d34303",
     "superstore.html/shows multiple sort indicators": "b6f6bd22638f550ee07cadc46c1c37c0",
     "superstore.html/shows a sort indicator on column split": "5391f996d29f1144d87ddc5f802e8c52",
-    "__GIT_COMMIT__": "13d836c9ddaa8374b884e9807f8a433c3fc53a6e",
+    "__GIT_COMMIT__": "22b09f8cad2692f94377e00577038e0c1683c7f3",
     "superstore.html/should reinterpret metadata when only row pivots are changed": "fb9c5cb1b9a4148023f6edf4bffd27db",
     "empty.html/perspective-click is fired when an empty dataset is loaded first": "7e5b653226145e1ab9f82e2417d89d7b",
     "superstore.html/should not edit an immutable viewer": "8d99c2bc8bf7450a5f2cc4f5b1ca7412",
-    "editable.html/should save edits to a string column": "0f1e5aae7ca316d30e2926260fa4a049",
-    "editable.html/should save edits to an integer column": "81ef9bcde6197a213fba59ee33152c72",
-    "editable.html/should save edits of negative numbers to an integer column": "2007c3c6dc2b015f5e7e6223ad2c5be0",
-    "editable.html/should fail to save edits of invalid integers": "a0b7759a6a79313c676e25ae1af2a08b"
+    "editable.html/should save edits to a string column": "e1ccff5b0c2c15ee6363d1881f3a2754",
+    "editable.html/should save edits to an integer column": "0899c9636987608d306db60af44ec98f",
+    "editable.html/should save edits of negative numbers to an integer column": "81721a50fa662cc15818005b9fb85cd4",
+    "editable.html/should fail to save edits of invalid integers": "cfa6d5c69f1f9253fb33847ae5d0293a",
+    "editable.html/should follow the indexed row when the data updates": "6e2b11192251befdc4955dc4e4e48e7b"
 }
