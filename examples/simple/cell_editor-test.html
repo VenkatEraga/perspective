@@ -1,0 +1,91 @@
+<!--
+   
+   Copyright (c) 2017, the Perspective Authors.
+   
+   This file is part of the Perspective library, distributed under the terms of
+   the Apache License 2.0.  The full license can be found in the LICENSE file.
+
+-->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+
+    <script src="perspective-viewer.js"></script>
+    <script src="perspective-viewer-hypergrid.js"></script>
+    <script src="perspective-viewer-d3fc.js"></script>
+
+    <script src="perspective.js"></script>
+
+    <link rel='stylesheet' href="index.css">
+</head>
+
+<body>
+
+    <perspective-viewer>
+    </perspective-viewer>
+
+    <script>
+        const WORKER = window.perspective.worker();
+
+        const SCHEMA = {
+            "Id": "string",            
+            "Name": "string",
+            "Type":"string",
+            "Status": "string",
+            "Time": "string",
+            "Date": "date",
+            "Data": "float"
+        };
+
+        const COL_SCHEMA = [
+            {name:"Id", alias:"Id"},
+            {name:"Name", alias:"List Name", editor:'textfield'},
+            {name:"Type", alias:"List Type", editor:'autocomplete', 
+                                        option_items:["List type 1","List type 2", "abc", 
+                                        "bcd","bck","cde","cef","afe","123","yuiop",
+                                        "List type 0", "List 1"  ]},
+            {name:"Status", alias:"Status"},
+            {name:"Time", alias:"Time", editor:'time'},
+            {name:"Date", alias:"Date", editor:'textfield'},
+            {name:"Data", alias:"Data", editor:'textfield'}       
+           ];
+
+
+         const DATA=[
+             {
+                Id: "1730654", Name:"List  11.40 am", Type:"type 1",
+                Status : "Expired", Time :"11:40 am", Date:"09/04/2019",
+                Data:234567.56
+             },
+             {
+                Id: "1730655", Name:" List 12.20 pm", Type:"List type 2",
+                Status : "Expired", Time :"12:20 pm", Date:"09/04/2019",
+                Data:34326.56
+             },
+             {
+                Id: "1730661", Name:"Not Provided 2.10 pm",  Type:"List type 3",
+                Status : "Expired", Time :"2:10 pm", Date:"09/04/2019",
+                Data:98986.56
+             }
+         ]; 
+
+        function on_load() {
+            var el = document.getElementsByTagName('perspective-viewer')[0];           
+            const table = WORKER.table(SCHEMA);           
+            table.update(DATA);
+            el.setAttribute("column_schema", JSON.stringify(COL_SCHEMA));
+            el.load(table);           
+            el.toggleConfig();
+        }
+        window.addEventListener('WebComponentsReady', function() {
+            on_load();
+        });
+    </script>
+
+</body>
+
+</html>

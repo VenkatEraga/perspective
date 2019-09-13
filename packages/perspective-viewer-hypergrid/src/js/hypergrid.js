@@ -24,6 +24,7 @@ import {get_styles, clear_styles, default_grid_properties} from "./styles.js";
 import {set_formatters} from "./formatters.js";
 import {set_editors} from "./editors.js";
 import {treeLineRendererPaint} from "./hypergrid-tree-cell-renderer";
+var load_cell_editors = require('./cell-editors/cell-editors');
 
 bindTemplate(TEMPLATE, style)(
     class HypergridElement extends HTMLElement {
@@ -70,6 +71,11 @@ bindTemplate(TEMPLATE, style)(
                     this.grid.behavior.setPSP(this._hg_data);
                     delete this._hgdata;
                 }
+
+                  //load celll editors here
+                 //TODO: configured it in client and need to pass here. 
+                 const column_schema = document.getElementsByTagName('perspective-viewer')[0].getAttribute('column_schema');      
+                 load_cell_editors(this.grid, JSON.parse(column_schema));
             }
         }
     }
