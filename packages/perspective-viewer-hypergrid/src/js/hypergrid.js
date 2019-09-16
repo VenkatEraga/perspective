@@ -64,18 +64,20 @@ bindTemplate(TEMPLATE, style)(
                 set_formatters(this.grid);
                 set_editors(this.grid);
 
+                 //load celll editors here
+                 //TODO: configured it in client and need to pass here. 
+                 const column_schema = document.getElementsByTagName('perspective-viewer')[0].getAttribute('column_schema');      
+                 load_cell_editors(this.grid, JSON.parse(column_schema));
+
                 // Add tree cell renderer
                 this.grid.cellRenderers.add("TreeCell", Base.extend({paint: treeLineRendererPaint}));
 
                 if (this._hg_data) {
                     this.grid.behavior.setPSP(this._hg_data);
                     delete this._hgdata;
-                }
-
-                  //load celll editors here
-                 //TODO: configured it in client and need to pass here. 
-                 const column_schema = document.getElementsByTagName('perspective-viewer')[0].getAttribute('column_schema');      
-                 load_cell_editors(this.grid, JSON.parse(column_schema));
+                }  
+                
+                
             }
         }
     }
@@ -193,10 +195,14 @@ async function grid_create(div, view, task, max_rows, max_cols, force) {
     };
 
     perspectiveHypergridElement.set_data(json, schema, tschema, rowPivots, columns, force);
+
+    
     this.hypergrid.renderer.computeCellsBounds(true);
     await this.hypergrid.canvas.resize(true);
     this.hypergrid.canvas.paintNow();
     this.hypergrid.canvas.paintNow();
+
+    
 }
 
 global.registerPlugin("hypergrid", {

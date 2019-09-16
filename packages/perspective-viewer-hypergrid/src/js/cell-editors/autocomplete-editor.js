@@ -8,10 +8,7 @@
 
 var Textfield = require("fin-hypergrid/src/cellEditors/Textfield");
 var prototype = require("fin-hypergrid/src/cellEditors/CellEditor").prototype;
-var Queueless = require("./queueless");
-var elfor = require("./elfor");
 
-var TOGGLE_MODE_PREFIX = "toggle-mode-";
 
 var stateToActionMap = {
   hidden: slideDown,
@@ -23,25 +20,34 @@ module.exports = function(grid) {
     initialize: function() {
       var el = this.el;
 
-      this.input = el.querySelector("input");
-      this.dropper = el.querySelector("span");
+      this.input = el.querySelector("input");    
       this.options = el.querySelector("div");
       this.controls = this.options.querySelector("div");
-      this.dropdown = this.options.querySelector("select");
-      this.controllable = this.modes.length > 1;
-      // set up a transition end controller
-      this.optionsTransition = new Queueless(this.options, this);
-      this.menuModesSource = this.column.menuModes || { distinctValues: true };
+      this.dropdown = this.options.querySelector("select");    
+      this.isOptionFocused = false;
+     
+      this.input.addEventListener("blur", () => {
+        setTimeout(() => {
+          if (!this.isOptionFocused) {
+            console.log(" blurred ");
+            this.cancelEditing();
+          } else this.isOptionFocused = false;
+        });
+      });
 
-      // wire-ups
-      this.dropper.addEventListener(
-        "mousedown",
-        this.toggleDropDown.bind(this)
-      );
+      this.dropdown.addEventListener("focus", () => {
+        this.isOptionFocused = true;
+      });
+
       this.dropdown.addEventListener("mousewheel", function(e) {
         e.stopPropagation();
       });
       this.dropdown.addEventListener("change", this.insertText.bind(this));
+
+      const formatter = this.column.getFormatter();
+      const items = JSON.parse(this.dropdown.getAttribute("option_items"));
+      const option_width = this.input.style.width;
+      this.loadOptions(this.dropdown, items, formatter, option_width);
 
       // Auto filter on keyup
       this.input.onkeyup = function(e) {
@@ -70,192 +76,78 @@ module.exports = function(grid) {
 
     template: [
       '<div class="hypergrid-combobox" title="">',
-      '    <input type="text" lang="{{locale}}" style="{{input_style}}">',
-      '    <span title="Click for options"></span>',
+      '    <input type="text"  style="{{input_style}}">',     
       "    <div>",
       "        <div></div>",
-      '        <select option_items="{{option_items}}" size="10" lang="{{locale}}"></select>',
+      '        <select option_items="{{option_items}}" size="10"></select>',
       "    </div>",
       "</div>"
     ].join("\n"),
 
-    modes: [
-      {
-        name: "distinctValues",
-        appendOptions: function(optgroup) {
-          const formatter = this.column.getFormatter();
-          const items = JSON.parse(optgroup.getAttribute("option_items"));
-          const option_width = this.input.style.width;
-          this.loadOptions(optgroup, items, formatter, option_width);
-        }
-      }
-    ],
-
     showEditor: function() {
-      // set the initial state of the mode toggles
-      if (!this.built) {
-        var menuModesSource = this.menuModesSource,
-          menuModes = (this.menuModes = {});
-
-        // build the proxy
-        this.modes.forEach(function(mode) {
-          var modeName = mode.name;
-          if (modeName in menuModesSource) {
-            menuModes[modeName] = menuModesSource[modeName];
-          }
-        });
-
-        // wire-ups
-        if (this.controllable) {
-          this.controls.addEventListener("click", onModeIconClick.bind(this));
-        }
-
-        this.modes.forEach(function(mode) {
-          // create a toggle
-          var toggle = document.createElement("span");
-          if (this.controllable) {
-            toggle.className = TOGGLE_MODE_PREFIX + mode.name;
-            toggle.title = "Toggle " + (mode.label || mode.name).toLowerCase();
-            if (mode.tooltip) {
-              toggle.title += "\n" + mode.tooltip;
-            }
-            toggle.textContent = mode.symbol;
-          }
-
-          this.controls.appendChild(toggle);
-
-          // create and label a new optgroup
-          if (mode.selector) {
-            var optgroup = document.createElement("optgroup");
-            optgroup.label = mode.label;
-            optgroup.className = "submenu-" + mode.name;
-            optgroup.style.backgroundColor = mode.backgroundColor;
-            this.dropdown.add(optgroup);
-          }
-
-          setModeIconAndOptgroup.call(
-            this,
-            toggle,
-            mode.name,
-            menuModes[mode.name]
-          );
-        }, this);
-
-        this.built = true;
-      }
-
       prototype.showEditor.call(this);
     },
 
-    hideEditor: function() {
-      // this is where you would persist this.menuModes
+    hideEditor: function() {     
       prototype.hideEditor.call(this);
     },
 
-    toggleDropDown: function() {
-      if (!this.optionsTransition.transitioning) {
+    toggleDropDown: function() {    
         var state = window.getComputedStyle(this.dropdown).visibility;
-        stateToActionMap[state].call(this);
-      }
+        stateToActionMap[state].call(this);    
     },
 
     insertText: function(e) {
       // replace the input text with the drop-down text
       this.input.focus();
-      this.input.value = this.dropdown.value;
-      this.input.setSelectionRange(0, this.input.value.length);
+      this.input.value = this.dropdown.value;     
       // close the drop-down
       this.toggleDropDown();
+      this.stopEditing();
     },
+
     loadOptions: function(dropdown, items, formatter, width) {
-      const toggleDropDown = this.toggleDropDown.bind(this);
       items.sort().forEach(function(item) {
         const val = formatter(item);
         var option = new Option(val, val);
         option.style.width = width;
-        option.addEventListener("mousedown", toggleDropDown);
         dropdown.appendChild(option);
       });
-    }
+    },
+    getEditorValue,
+    setBounds: setCellBounds,
+    saveEditorValue
   });
 
   grid.cellEditors.add(autocomplete);
 };
 
-function onModeIconClick(e) {
-  var ctrl = e.target;
-
-  if (ctrl.tagName === "SPAN") {
-    // extra ct the mode name from the toggle control's class name
-    var modeClassName = Array.prototype.find.call(ctrl.classList, function(
-        className
-      ) {
-        return className.indexOf(TOGGLE_MODE_PREFIX) === 0;
-      }),
-      modeName = modeClassName.substr(TOGGLE_MODE_PREFIX.length);
-
-    // toggle mode in the filter
-    var modeState = (this.menuModes[modeName] ^= 1);
-
-    setModeIconAndOptgroup.call(this, ctrl, modeName, modeState);
-  }
+function getEditorValue(updated) {
+  this._row.then(([old]) => {
+    const index = old.__INDEX__;
+    delete old["__INDEX__"];
+    const colname = Object.keys(old)[0];
+    this.table.update([{ __INDEX__: index, [colname]: updated }]);
+  });
+  return this.localizer.format(updated);
 }
 
-function setModeIconAndOptgroup(ctrl, name, state) {
-  var style,
-    optgroup,
-    sum,
-    display,
-    dropdown = this.dropdown,
-    mode = this.modes.find(function(mode) {
-      return mode.name === name;
-    }), // eslint-disable-line no-shadow
-    selector = mode.selector;
+function setCellBounds(cellBounds) {
+  const style = this.el.style;
+  style.left = px(cellBounds.x + 4);
+  style.top = px(cellBounds.y - 3);
+  style.width = px(cellBounds.width - 10);
+  style.height = px(cellBounds.height);
+}
 
-  // set icon state (color)
-  ctrl.classList.toggle("active", !!state);
+function px(n) {
+  return n + "px";
+}
 
-  // empty the optgroup if hiding; rebuild it if showing
-  if (state) {
-    // rebuild it
-    // show progress cursor for (at least) 1/3 second
-    style = this.el.style;
-    style.cursor = "progress";
-    setTimeout(function() {
-      style.cursor = null;
-    }, 333);
-
-    if (selector) {
-      optgroup = dropdown.querySelector(selector);
-      sum = mode.appendOptions.call(this, optgroup);
-
-      // update sum
-      optgroup.label = optgroup.label.replace(/ \(\d+\)$/, ""); // remove old sum
-      // optgroup.label += ' (' + sum + ')';
-    } else {
-      sum = mode.appendOptions.call(this, dropdown);
-      if (!this.controllable) {
-        //ctrl.textContent = sum + ' values';
-        ctrl.textContent = "";
-      }
-    }
-
-    display = null;
-  } else {
-    display = "none";
-  }
-
-  // hide/show the group
-  if (!selector) {
-    selector = "option,optgroup:not([class])";
-    var mustBeChildren = true; // work-around for ':scope>option,...' not avail in IE11
-  }
-  elfor.each(selector, iteratee, dropdown);
-
-  function iteratee(el) {
-    if (!mustBeChildren || el.parentElement === dropdown) {
-      el.style.display = display;
-    }
+function saveEditorValue(x) {
+   var save = !(x && x === this.initialValue) && this.grid.fireBeforeCellEdit(this.event.gridCell, this.initialValue, x, this);
+  if (save) {
+  this.data[this.event.gridCell.y - 1][this.event.gridCell.x] = x;
   }
 }
 
@@ -284,25 +176,19 @@ function slideDown() {
 
   // while in drop-down, listen for clicks in text box which means abprt
   this.input.addEventListener(
-    "mousedown",
+    "mouseup",
     (this.slideUpBound = slideUp.bind(this))
   );
 
-  // wait for transition to end
-  this.optionsTransition.begin();
-}
+  }
 
 function slideUp() {
   // stop listening to input clicks
-  this.input.removeEventListener("mousedown", this.slideUpBound);
+  this.input.removeEventListener("mouseup", this.slideUpBound);
 
   // start the slide up effect
   this.options.style.height = 0;
 
-  // schedule the hide to occur after the slide up effect
-  this.optionsTransition.begin(function(event) {
-    this.style.visibility = "hidden";
-  });
 }
 
 function getFloat(el, style) {

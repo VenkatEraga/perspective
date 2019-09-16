@@ -43,39 +43,51 @@
 
         const COL_SCHEMA = [
             {name:"Id", alias:"Id"},
-            {name:"Name", alias:"List Name", editor:'textfield'},
+            {name:"Name", alias:"List Name", editor:'perspective-text'},
             {name:"Type", alias:"List Type", editor:'autocomplete', 
-                                        option_items:["List type 1","List type 2", "abc", 
-                                        "bcd","bck","cde","cef","afe","123","yuiop",
-                                        "List type 0", "List 1"  ]},
-            {name:"Status", alias:"Status"},
-            {name:"Time", alias:"Time", editor:'time'},
-            {name:"Date", alias:"Date", editor:'textfield'},
-            {name:"Data", alias:"Data", editor:'textfield'}       
+                                        option_items:["type 1","type 2","type 3", "abc", 
+                                        "bcd","bck","cde","cef","afe","123","yuiop" ]},
+            {name:"Status", alias:"Status"},           
+            {name:"Date", alias:"Date", editor:'perspective-text'},
+            {name:"Data", alias:"Data", editor:'perspective-number'}       
            ];
 
 
          const DATA=[
              {
                 Id: "1730654", Name:"List  11.40 am", Type:"type 1",
-                Status : "Expired", Time :"11:40 am", Date:"09/04/2019",
+                Status : "Expired", Date:"09/04/2019",
                 Data:234567.56
              },
              {
-                Id: "1730655", Name:" List 12.20 pm", Type:"List type 2",
-                Status : "Expired", Time :"12:20 pm", Date:"09/04/2019",
+                Id: "1730655", Name:" List 12.20 pm", Type:"type 2",
+                Status : "Expired", Date:"09/04/2019",
                 Data:34326.56
              },
              {
-                Id: "1730661", Name:"Not Provided 2.10 pm",  Type:"List type 3",
-                Status : "Expired", Time :"2:10 pm", Date:"09/04/2019",
+                Id: "1730661", Name:"Not Provided 2.10 pm",  Type:"type 3",
+                Status : "Expired",  Date:"09/04/2019",
+                Data:98986.56
+             },
+             {
+                Id: "1730661", Name:"Not Provided 2.10 pm",  Type:"type 1",
+                Status : "Expired",  Date:"09/04/2019",
+                Data:98986.56
+             },
+             {
+                Id: "1730661", Name:"Not Provided 2.10 pm",  Type:"type 2",
+                Status : "Expired", Date:"09/04/2019",
                 Data:98986.56
              }
+
          ]; 
 
         function on_load() {
             var el = document.getElementsByTagName('perspective-viewer')[0];           
-            const table = WORKER.table(SCHEMA);           
+            const table = WORKER.table(SCHEMA);
+            for (var i=0;i<100;i++){
+                DATA.push(DATA[0]);
+            }           
             table.update(DATA);
             el.setAttribute("column_schema", JSON.stringify(COL_SCHEMA));
             el.load(table);           

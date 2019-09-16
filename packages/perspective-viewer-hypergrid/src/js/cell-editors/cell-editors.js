@@ -9,9 +9,9 @@ module.exports = function(grid, column_schema) {
         load_time_editor(grid);
 
     // Override to assign the the cell editors.
-    grid.behavior.dataModel.getCellEditorAt = function(x, y, declaredEditorName, cellEvent) { 
+    grid.behavior.dataModel.getCellEditorAt = function(columnIndex, rowIndex, declaredEditorName, cellEvent) { 
                
-        const column =  grid.behavior.getColumn(x);
+        const column =  grid.behavior.getColumn(columnIndex);
         const column_name = column.header;
         const column_width = column.properties["width"];
 
@@ -24,7 +24,19 @@ module.exports = function(grid, column_schema) {
                cellEvent.input_style="width:"+column_width+"px;height:21px";
              }
          }
-        var cellEditor = grid.cellEditors.create(editorName, cellEvent);
+        var cellEditor = grid.cellEditors.create(editorName, cellEvent);        
+        cellEditor.data = this.data;
+        cellEditor.table = this._table;
+        const offset = grid.renderer.dataWindow.top;
+        const args = {
+            start_row: rowIndex + offset - 1,
+            end_row: rowIndex + offset,
+            start_col: columnIndex,
+            end_col: columnIndex + 1,
+            index: true
+        };
+        cellEditor._row = this._view.to_json(args);
+        cellEditor.el.addEventListener("blur", () => setTimeout(() => cellEditor.cancelEditing()));
         return cellEditor;
     };
 };

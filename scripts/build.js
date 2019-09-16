@@ -78,7 +78,7 @@ function compileRuntime({inputFile, inputWasmFile, format, packageName}) {
 
 function docker(image = "emsdk") {
     console.log("-- Creating emsdk docker image");
-    let cmd = "docker run --rm -it";
+    let cmd = "docker run --rm";
     if (process.env.PSP_CPU_COUNT) {
         cmd += ` --cpus="${parseInt(process.env.PSP_CPU_COUNT)}.0"`;
     }
